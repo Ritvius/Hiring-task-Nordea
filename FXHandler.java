@@ -10,13 +10,12 @@ import java.util.Map;
  *
  */
 public class FXHandler {
-	public String buy;	
-	public String sell;
-	public Map<String, ArrayList<String>> currencyMap = new HashMap<>();
-	public int count = 1; //Count == 0 is tested separately (same currency for both sell and buy).
+	private String buy;	
+	private String sell;
+	private Map<String, ArrayList<String>> currencyMap = new HashMap<>();
 	
 	/**
-	 * Constructor initializes FXHandler
+	 * Constructor initializes FXHandler and creates HashMap from user inputed array of currency pairs.
 	 */
 	public FXHandler(String buy, String sell, String[] currencyArr) {
 		
@@ -25,9 +24,13 @@ public class FXHandler {
 		
         String[][] currencyPairs = new String[currencyArr.length][2];
 
-        //Making it so currency_pairs is now a matrix where each column consists of a pair (two rows).
+        //Making it so currencyPairs is a matrix where each column consists of a pair (two rows).
     		for (int i = 0; i < currencyArr.length; i++) {
     			String[] temp = currencyArr[i].split("/");
+    			if (temp.length != 2) {
+    				System.out.print("Please use forward slashes to indicate pairs. Ending program.");
+    				System.exit(0);
+    			}
     			currencyPairs[i][0] = temp[0];
     			currencyPairs[i][1] = temp[1];
     		}
@@ -69,14 +72,24 @@ public class FXHandler {
 			return -1;
 		}
 		
-		
+		//Creating array list with passed currencies, including 'buy' currency
 		ArrayList<String> passedCurrencies = new ArrayList<>();
 		passedCurrencies.add(buy);
+		
+		//Potential currencies are all currencies connected to the current currency (buy).
 		ArrayList<String> potentialCurrencies = currencyMap.get(buy);
+		
 		//Possibly redundant, but useful in case someone entered e.g. DKK/DKK as a pair.
 		potentialCurrencies.removeAll(passedCurrencies);
 		
-		return function(passedCurrencies, potentialCurrencies);
+		//If the sell and buy currencies are directly exchangeable.
+		if (potentialCurrencies.contains(sell)) {
+			return 1;
+		}
+		
+		int count = 1;
+		//Beginning to recursively search for least amount of exchanges.
+		return function(passedCurrencies, potentialCurrencies, count);
 	}
 		
 	/**
@@ -84,44 +97,43 @@ public class FXHandler {
 	 * necessary exchanges.
 	 * @param passedCurrencies - the currencies which have already been examined
 	 * @param potentialCurrencies - the currencies which the current currency can convert to
+	 * @param count - the current amount of exchanges needed
 	 * @return least amount of necessary exchanges between "buy" and "sell" currencies.
 	 */
-	private int function(ArrayList<String> passedCurrencies, ArrayList<String> potentialCurrencies) {				
-		//Check if we've reached the goal currency (sell).
-		if (potentialCurrencies.contains(sell)) {
-			return count;
-		} else {
-			count++;
-			//Checking firstly if any potential currencies lead to the goal currency.
-				for (String currentCurrency : potentialCurrencies) {
-					
-					//Updating passedCurrencies and creating newCurrencies, which is
-					//a new "potentialCurrencies", consisting of the potential currencies
-					//to convert to from currentCurrency.
-					ArrayList<String> newCurrencies = currencyMap.get(currentCurrency);
-					newCurrencies.removeAll(passedCurrencies);
-					
-					if (newCurrencies.contains(sell)) {
-						return count;
-					}
-				}
-				//Secondly, checking next currencies recursively.
-				for (String currentCurrency : potentialCurrencies) {
-					
-					//Updating passedCurrencies and creating newCurrencies, which is
-					//a new "potentialCurrencies", consisting of the potential currencies
-					//to convert to from currentCurrency.
-					ArrayList<String> newCurrencies = currencyMap.get(currentCurrency);
-					newCurrencies.removeAll(passedCurrencies);
-					
-					passedCurrencies.add(currentCurrency);
-					int temp = function(passedCurrencies, newCurrencies);
-					if (temp != -1) {
-						return temp;
-					} //else, continue to next currency in potentialCurrencies
-				}
+	private int function(ArrayList<String> passedCurrencies, ArrayList<String> potentialCurrencies, int count) {				
+		//Increasing count for each call of this private help function
+		count++;
+		//Checking firstly if any potential currencies lead to the goal currency.
+		for (String currentCurrency : potentialCurrencies) {
+			
+			//Updating passedCurrencies and creating newCurrencies, which is
+			//a new "potentialCurrencies", consisting of the potential currencies
+			//to convert to from currentCurrency.
+			ArrayList<String> newCurrencies = currencyMap.get(currentCurrency);
+			newCurrencies.removeAll(passedCurrencies);
+			
+			if (newCurrencies.contains(sell)) {
+				return count;
 			}
+		}
+		//Secondly, checking next currencies recursively.
+		for (String currentCurrency : potentialCurrencies) {
+					
+			//Updating passedCurrencies and creating newCurrencies, which is
+			//a new "potentialCurrencies", consisting of the potential currencies
+			//to convert to from currentCurrency.
+			ArrayList<String> newCurrencies = currencyMap.get(currentCurrency);
+			newCurrencies.removeAll(passedCurrencies);
+			
+			passedCurrencies.add(currentCurrency);
+			
+			int temp = function(passedCurrencies, newCurrencies, count);
+			if (temp != -1) { //A 'path' between sell and buy is found and we're done.
+				return temp;
+			} //else, continue to next currency in potentialCurrencies
+		}
 		//If no possible conversions, return -1.
+		//This return will be reached if the list of potential currencies is empty.
 		return -1;
 	}
 }

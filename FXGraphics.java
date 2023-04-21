@@ -12,7 +12,7 @@ public class FXGraphics {
 	
 	/**
 	 * Constructor which asks the user for supported currency pairs, what currency the user wishes
-	 * to buy and what currency the user wishes to sell.
+	 * to buy and what currency the user wishes to sell. Writes how many minimum exchanges are needed.
 	 */
 	public FXGraphics() {
 		String[] currencyArr;
@@ -37,6 +37,7 @@ public class FXGraphics {
         FXHandler handler = new FXHandler(buy, sell, currencyArr);
         
         int nbrExchanges = handler.nbrOfExchanges();
+        
         switch (nbrExchanges) {
         case -1:
 	        System.out.println("Cannot convert between sell and buy currencies according to the list of supported currency pairs.");
