@@ -1,6 +1,7 @@
 package nordeaFX;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 /**
@@ -100,7 +101,11 @@ public class FXHandler {
 	 * @param count - the current amount of exchanges needed
 	 * @return least amount of necessary exchanges between "buy" and "sell" currencies.
 	 */
-	private int function(ArrayList<String> passedCurrencies, ArrayList<String> potentialCurrencies, int count) {				
+	private int function(ArrayList<String> passedCurrencies, ArrayList<String> potentialCurrencies, int count) {	
+		// If there are no more currencies to check, return -1. (No solution found).
+		if (potentialCurrencies.isEmpty()) {
+			return -1;
+		}
 		//Increasing count for each call of this private help function
 		count++;
 		//Checking firstly if any potential currencies lead to the goal currency.
@@ -117,8 +122,11 @@ public class FXHandler {
 			}
 		}
 		//Secondly, checking next currencies recursively.
+		
+		int[] results = new int[potentialCurrencies.size()]; //Array to keep track of needed nbr of exchanges
+		int i = 0;
 		for (String currentCurrency : potentialCurrencies) {
-					
+			
 			//Updating passedCurrencies and creating newCurrencies, which is
 			//a new "potentialCurrencies", consisting of the potential currencies
 			//to convert to from currentCurrency.
@@ -127,13 +135,25 @@ public class FXHandler {
 			
 			passedCurrencies.add(currentCurrency);
 			
-			int temp = function(passedCurrencies, newCurrencies, count);
-			if (temp != -1) { //A 'path' between sell and buy is found and we're done.
-				return temp;
-			} //else, continue to next currency in potentialCurrencies
+			//For each currency in potentialCurrencies, save how many exchanges are needed.
+			results[i] = function(passedCurrencies, newCurrencies, count);
+			i++;
 		}
-		//If no possible conversions, return -1.
-		//This return will be reached if the list of potential currencies is empty.
-		return -1;
+		//Return the smallest number above one in results as the number of needed exchanges. If no such value
+		//exists, return -1.
+		
+		//Creating new ArrayList with all values greater than 1, i.e where a possible conversion was found (a success).
+		ArrayList<Integer> successfulResults = new ArrayList<Integer>();
+		for (Integer j: results) {
+		  if (j > 1) {
+			  successfulResults.add(j);
+		  }
+		}
+		//If nbr of successes is zero, return -1 (no solution found). Else, return minimum value.
+		if (successfulResults.isEmpty()) {
+			return -1;
+		} else {
+			return Collections.min(successfulResults);
+		}
 	}
 }
